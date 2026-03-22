@@ -1,10 +1,12 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
+import { APP_GUARD } from '@nestjs/core';
 import { AppController } from './controllers/app.controller';
 import { AuthController } from './controllers/auth.controller';
 import { AuthGuard } from './infrastructure/auth.guard';
 import { PrismaService } from './infrastructure/prisma.service';
+import { RedisService } from './infrastructure/redis.service';
 import { UsersRepository } from './repositories/users.repository';
 import { AppService } from './services/app.service';
 import { AuthService } from './services/auth.service';
@@ -28,6 +30,7 @@ import { RefreshTokenRepository } from './repositories/refresh-token.repository'
     UsersRepository,
     RefreshTokenRepository,
     PrismaService,
+    RedisService,
     AuthGuard,
   ],
 })
