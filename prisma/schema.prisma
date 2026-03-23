@@ -27,7 +27,9 @@ model User {
   createdAt          DateTime           @default(now()) @map("created_at")
   updatedAt          DateTime           @updatedAt @map("updated_at")
 
-  refreshTokens RefreshToken[]
+  refreshTokens  RefreshToken[]
+  subscriptions Subscription[]
+  prompts Prompt[]
 
   @@map("users")
 }
@@ -45,4 +47,48 @@ model RefreshToken {
   @@index([userId, revokedAt])
   @@index([expiresAt])
   @@map("refresh_tokens")
+}
+
+model Subscription {
+  id                String             @id @default(uuid()) @db.Uuid
+  userId            String             @db.Uuid @map("user_id")
+  tier              SubscriptionStatus @default(FREE)
+  gateway           String             @default("KHALTI")
+  pidx              String?            @unique
+  purchaseOrderId   String             @map("purchase_order_id")
+  purchaseOrderName String             @map("purchase_order_name")
+  amount            Int
+  paymentUrl        String             @map("payment_url")
+  gatewayStatus     String             @default("Initiated") @map("gateway_status")
+  transactionId     String?            @map("transaction_id")
+  active            Boolean            @default(false)
+  expiresAt         DateTime?          @map("expires_at")
+  canceledAt        DateTime?          @map("canceled_at")
+  createdAt         DateTime           @default(now()) @map("created_at")
+  updatedAt         DateTime           @updatedAt @map("updated_at")
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([userId, active])
+  @@index([gatewayStatus])
+  @@map("subscriptions")
+}
+
+enum PromptStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+}
+
+model Prompt {
+  id String @id @default(uuid()) @db.Uuid
+  userId String @db.Uuid @map("user_id")
+  text String 
+  status PromptStatus @default(PENDING)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId, createdAt])
+  @@map("prompts")
 }

@@ -4,12 +4,16 @@ import {
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { Request } from 'express';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
-  constructor(private jwtService: JwtService) {}
+  constructor(
+    private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
@@ -18,7 +22,16 @@ export class AuthGuard implements CanActivate {
       throw new UnauthorizedException();
     }
     try {
-      const payload = await this.jwtService.verifyAsync(token);
+      const accessSecret = this.configService.get<string>('JWT_ACCESS_SECRET');
+      const payload = await this.jwtService.verifyAsync<{
+        type?: string;
+        sub?: string;
+      }>(token, accessSecret ? { secret: accessSecret } : undefined);
+
+      if (payload.type !== 'access' || !payload.sub) {
+        throw new UnauthorizedException('Invalid access token type.');
+      }
+
       request['user'] = payload;
     } catch {
       throw new UnauthorizedException();
