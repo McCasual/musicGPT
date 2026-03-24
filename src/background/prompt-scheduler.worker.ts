@@ -7,7 +7,7 @@ import {
   SCHEDULE_PENDING_PROMPTS_JOB,
 } from 'src/background/prompt-jobs';
 import { PromptQueueService } from 'src/background/prompt-queue.service';
-import { PromptRepository } from 'src/repositories/prompt.repository';
+import { PromptWorkflowService } from 'src/services/prompt-workflow.service';
 
 @Injectable()
 @Processor(PROMPT_SCHEDULER_QUEUE, { concurrency: 1 })
@@ -15,7 +15,7 @@ export class PromptSchedulerWorker extends WorkerHost {
   private readonly logger = new Logger(PromptSchedulerWorker.name);
 
   constructor(
-    private readonly promptRepository: PromptRepository,
+    private readonly promptWorkflowService: PromptWorkflowService,
     private readonly promptQueueService: PromptQueueService,
   ) {
     super();
@@ -27,9 +27,10 @@ export class PromptSchedulerWorker extends WorkerHost {
       return;
     }
 
-    const pendingPrompts = await this.promptRepository.findPendingForScheduling(
-      this.resolveBatchSize(job.data?.batchSize),
-    );
+    const pendingPrompts =
+      await this.promptWorkflowService.findPendingForScheduling(
+        this.resolveBatchSize(job.data?.batchSize),
+      );
 
     for (const prompt of pendingPrompts) {
       await this.promptQueueService.enqueuePrompt(prompt);

@@ -1,4 +1,4 @@
-import { SubscriptionStatus } from 'generated/prisma/client';
+export type PromptSubscriptionStatus = 'FREE' | 'PAID';
 
 export const PROMPT_SCHEDULER_QUEUE = 'prompt-scheduler';
 export const PROMPT_PROCESSING_QUEUE = 'prompt-processing';
@@ -19,11 +19,11 @@ export interface PromptSchedulingCandidate {
   userId: string;
   text: string;
   createdAt: Date;
-  subscriptionStatus: SubscriptionStatus;
+  subscriptionStatus: PromptSubscriptionStatus;
 }
 
 export function getPromptJobPriority(
-  subscriptionStatus: SubscriptionStatus,
+  subscriptionStatus: PromptSubscriptionStatus,
 ): number {
-  return subscriptionStatus === SubscriptionStatus.PAID ? 1 : 10;
+  return subscriptionStatus === 'PAID' ? 1 : 10;
 }

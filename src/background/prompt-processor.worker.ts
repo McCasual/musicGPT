@@ -1,7 +1,6 @@
 import { Processor, WorkerHost } from '@nestjs/bullmq';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { PromptStatus } from 'generated/prisma/client';
 import { Job } from 'bullmq';
 import { setTimeout as sleep } from 'node:timers/promises';
 import {
@@ -10,7 +9,7 @@ import {
   PROMPT_PROCESSING_QUEUE,
 } from 'src/background/prompt-jobs';
 import { PromptNotificationPublisherService } from 'src/background/prompt-notification-publisher.service';
-import { PromptRepository } from 'src/repositories/prompt.repository';
+import { PromptWorkflowService } from 'src/services/prompt-workflow.service';
 
 @Injectable()
 @Processor(PROMPT_PROCESSING_QUEUE, { concurrency: 5 })
@@ -18,7 +17,7 @@ export class PromptProcessorWorker extends WorkerHost {
   private readonly logger = new Logger(PromptProcessorWorker.name);
 
   constructor(
-    private readonly promptRepository: PromptRepository,
+    private readonly promptWorkflowService: PromptWorkflowService,
     private readonly configService: ConfigService,
     private readonly promptNotificationPublisher: PromptNotificationPublisherService,
   ) {
@@ -36,77 +35,52 @@ export class PromptProcessorWorker extends WorkerHost {
       throw new Error('Missing promptId for prompt processing job.');
     }
 
-    const prompt = await this.promptRepository.findById(promptId);
-    if (!prompt) {
+    const claimResult =
+      await this.promptWorkflowService.claimPromptForProcessing(promptId);
+    if (claimResult.status === 'NOT_FOUND') {
       this.logger.warn(`Prompt ${promptId} was not found. Skipping job ${job.id}.`);
       return;
     }
 
-    if (prompt.status === PromptStatus.COMPLETED) {
-      return prompt;
+    if (claimResult.status === 'ALREADY_COMPLETED') {
+      return { promptId, status: 'COMPLETED' };
     }
 
-    if (prompt.status === PromptStatus.PENDING) {
-      const markedAsProcessing =
-        await this.promptRepository.markProcessing(promptId);
-
-      if (!markedAsProcessing) {
-        this.logger.warn(`Prompt ${promptId} is already claimed by another worker.`);
-        return;
-      }
+    if (claimResult.status === 'ALREADY_CLAIMED') {
+      this.logger.warn(`Prompt ${promptId} is already claimed by another worker.`);
+      return;
     }
 
     try {
       await sleep(this.getPositiveInt('PROMPT_PROCESSING_DELAY_MS', 5000));
 
-      const completedPrompt = await this.promptRepository.completeWithAudio({
+      const completed = await this.promptWorkflowService.completePromptWithAudio({
         promptId,
-        title: this.buildAudioTitle(prompt.text),
+        title: this.buildAudioTitle(claimResult.promptText),
         url:
           this.configService.get<string>('PROMPT_AUDIO_URL')?.trim() ||
           '/audios/processed-prompt.mp3',
       });
 
-      if (completedPrompt && completedPrompt.status === PromptStatus.COMPLETED) {
+      if (completed) {
         await this.publishPromptCompletedEvent(promptId);
       }
 
-      return completedPrompt;
+      return completed ? { promptId, status: 'COMPLETED' } : null;
     } catch (error) {
-      await this.promptRepository.markPending(promptId);
+      await this.promptWorkflowService.markPromptPending(promptId);
       throw error;
     }
   }
 
   private async publishPromptCompletedEvent(promptId: string): Promise<void> {
-    const completedPrompt =
-      await this.promptRepository.findByIdWithLatestAudio(promptId);
-
-    if (!completedPrompt || completedPrompt.status !== PromptStatus.COMPLETED) {
+    const event =
+      await this.promptWorkflowService.buildPromptCompletedEvent(promptId);
+    if (!event) {
       return;
     }
 
-    const latestAudio = completedPrompt.audios[0] ?? null;
-
-    await this.promptNotificationPublisher.publishPromptCompleted({
-      userId: completedPrompt.userId,
-      prompt: {
-        id: completedPrompt.id,
-        text: completedPrompt.text,
-        status: 'COMPLETED',
-        createdAt: completedPrompt.createdAt.toISOString(),
-        updatedAt: completedPrompt.updatedAt.toISOString(),
-      },
-      audio: latestAudio
-        ? {
-            id: latestAudio.id,
-            title: latestAudio.title,
-            url: latestAudio.url,
-            createdAt: latestAudio.createdAt.toISOString(),
-            updatedAt: latestAudio.updatedAt.toISOString(),
-          }
-        : null,
-    });
+    await this.promptNotificationPublisher.publishPromptCompleted(event);
   }
 
   private buildAudioTitle(text: string): string {

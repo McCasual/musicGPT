@@ -7,6 +7,7 @@ import { PromptProcessorWorker } from 'src/background/prompt-processor.worker';
 import { PROMPT_PROCESSING_QUEUE } from 'src/background/prompt-jobs';
 import { PrismaService } from 'src/infrastructure/prisma.service';
 import { PromptRepository } from 'src/repositories/prompt.repository';
+import { PromptWorkflowService } from 'src/services/prompt-workflow.service';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { PromptRepository } from 'src/repositories/prompt.repository';
   providers: [
     PrismaService,
     PromptRepository,
+    PromptWorkflowService,
     PromptNotificationPublisherService,
     PromptProcessorWorker,
   ],
