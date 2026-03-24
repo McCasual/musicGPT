@@ -5,6 +5,7 @@ import {
   Param,
   ParseUUIDPipe,
   Put,
+  Query,
   Req,
   UnauthorizedException,
   UseGuards,
@@ -13,7 +14,7 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth } from '@nestjs/swagger';
 import { Request } from 'express';
-import { UpdateAudioTitleDto } from 'src/dtos/audio.dto';
+import { GetAudiosQueryDto, UpdateAudioTitleDto } from 'src/dtos/audio.dto';
 import { AuthGuard } from 'src/infrastructure/auth.guard';
 import { AudioService } from 'src/services/audio.service';
 
@@ -30,8 +31,19 @@ export class AudioController {
   constructor(private readonly audioService: AudioService) {}
 
   @Get('')
-  listMyAudios(@Req() req: AuthenticatedRequest) {
-    return this.audioService.listUserAudios(this.getUserId(req));
+  listMyAudios(@Req() req: AuthenticatedRequest, @Query() query: GetAudiosQueryDto) {
+    const cursor = query.cursor?.trim() || undefined;
+    const parsedLimit = Number(query.limit ?? 20);
+    const limit = Math.min(
+      Math.max(Number.isFinite(parsedLimit) ? parsedLimit : 20, 1),
+      100,
+    );
+
+    return this.audioService.listUserAudios({
+      userId: this.getUserId(req),
+      cursor,
+      limit,
+    });
   }
 
   @Get(':id')

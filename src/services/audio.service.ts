@@ -1,12 +1,29 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { RedisService } from 'src/infrastructure/redis.service';
 import { AudioRepository } from 'src/repositories/audio.repository';
 
 @Injectable()
 export class AudioService {
-  constructor(private readonly audioRepository: AudioRepository) {}
+  constructor(
+    private readonly audioRepository: AudioRepository,
+    private readonly redisService: RedisService,
+  ) {}
 
-  async listUserAudios(userId: string) {
-    return this.audioRepository.findManyByUserId(userId);
+  async listUserAudios(params: { userId: string; cursor?: string; limit: number }) {
+    const { userId, cursor, limit } = params;
+    const cacheKey = this.getListCacheKey({ userId, cursor, limit });
+    const cachedData = await this.redisService.get(cacheKey);
+    if (cachedData) {
+      return cachedData;
+    }
+
+    const result = await this.audioRepository.findManyByUserId({
+      userId,
+      cursor,
+      limit,
+    });
+    void this.redisService.set(cacheKey, result, 60);
+    return result;
   }
 
   async getUserAudioById(userId: string, audioId: string) {
@@ -34,5 +51,18 @@ export class AudioService {
     }
 
     return updated;
+  }
+
+  private getListCacheKey(params: {
+    userId: string;
+    cursor?: string;
+    limit: number;
+  }): string {
+    const { userId, cursor, limit } = params;
+    return `${this.getListCachePrefix(userId)}cursor=${cursor ?? 'null'}:limit=${limit}`;
+  }
+
+  private getListCachePrefix(userId: string): string {
+    return `audio:user=${userId}:`;
   }
 }

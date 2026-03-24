@@ -6,11 +6,22 @@ import { PrismaService } from 'src/infrastructure/prisma.service';
 export class AudioRepository {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findManyByUserId(userId: string): Promise<Audio[]> {
-    return this.prisma.audio.findMany({
+  async findManyByUserId(params: { userId: string; cursor?: string; limit: number }) {
+    const { userId, cursor, limit } = params;
+    const audios = await this.prisma.audio.findMany({
       where: { userId },
-      orderBy: { createdAt: 'desc' },
+      take: limit + 1,
+      cursor: cursor ? { id: cursor } : undefined,
+      orderBy: { createdAt: 'asc' },
     });
+
+    let nextCursor: string | null = null;
+    if (audios.length > limit) {
+      nextCursor = audios[limit].id;
+      audios.pop();
+    }
+
+    return { audio: { data: audios, meta: { next_cursor: nextCursor } } };
   }
 
   async findByIdForUser(id: string, userId: string): Promise<Audio | null> {
