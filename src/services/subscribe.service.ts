@@ -177,8 +177,8 @@ export class SubscriptionService {
       'Partially Refunded',
     ].includes(gatewayStatus);
 
-    const updatedSubscription = await this.subscriptionRepository.syncPaymentStatus(
-      {
+    const updatedSubscription =
+      await this.subscriptionRepository.syncPaymentStatus({
         subscriptionId: subscription.id,
         userId: subscription.userId,
         totalAmount,
@@ -186,8 +186,7 @@ export class SubscriptionService {
         transactionId,
         shouldActivate,
         shouldMarkInactive,
-      },
-    );
+      });
 
     return {
       pidx: updatedSubscription.pidx,
@@ -248,9 +247,7 @@ export class SubscriptionService {
       this.configService.get<string>('KHALTI_BASE_URL')?.trim() ??
       'https://dev.khalti.com/api/v2/';
 
-    return configuredBase.endsWith('/')
-      ? configuredBase
-      : `${configuredBase}/`;
+    return configuredBase.endsWith('/') ? configuredBase : `${configuredBase}/`;
   }
 
   private resolveReturnUrl(websiteUrl: string): string {
@@ -281,8 +278,9 @@ export class SubscriptionService {
   }
 
   private resolvePaidPlanAmount(): number {
-    const configured =
-      this.configService.get<string>('KHALTI_PAID_PLAN_AMOUNT')?.trim();
+    const configured = this.configService
+      .get<string>('KHALTI_PAID_PLAN_AMOUNT')
+      ?.trim();
     if (!configured) {
       throw new InternalServerErrorException(
         'KHALTI_PAID_PLAN_AMOUNT is not configured.',

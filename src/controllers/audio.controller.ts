@@ -31,7 +31,10 @@ export class AudioController {
   constructor(private readonly audioService: AudioService) {}
 
   @Get('')
-  listMyAudios(@Req() req: AuthenticatedRequest, @Query() query: GetAudiosQueryDto) {
+  listMyAudios(
+    @Req() req: AuthenticatedRequest,
+    @Query() query: GetAudiosQueryDto,
+  ) {
     const cursor = query.cursor?.trim() || undefined;
     const parsedLimit = Number(query.limit ?? 20);
     const limit = Math.min(
@@ -66,7 +69,11 @@ export class AudioController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() body: UpdateAudioTitleDto,
   ) {
-    return this.audioService.updateUserAudioTitle(this.getUserId(req), id, body.title);
+    return this.audioService.updateUserAudioTitle(
+      this.getUserId(req),
+      id,
+      body.title,
+    );
   }
 
   private getUserId(req: AuthenticatedRequest): string {

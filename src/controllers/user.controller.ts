@@ -20,7 +20,10 @@ export class UserController {
   listUsers(@Query() query: GetUsersQueryDto) {
     const cursor = query.cursor?.trim() || undefined;
     const parsedLimit = Number(query.limit ?? 20);
-    const limit = Math.min(Math.max(Number.isFinite(parsedLimit) ? parsedLimit : 20, 1), 100);
+    const limit = Math.min(
+      Math.max(Number.isFinite(parsedLimit) ? parsedLimit : 20, 1),
+      100,
+    );
 
     return this.userService.getUsers({
       cursor,

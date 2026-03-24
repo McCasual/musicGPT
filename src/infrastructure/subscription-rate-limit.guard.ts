@@ -45,13 +45,14 @@ export class SubscriptionRateLimitGuard implements CanActivate {
         : this.getPositiveNumberConfig('RATE_LIMIT_FREE_LIMIT', 30);
 
     const key = `rate-limit:${identity.subscriptionStatus}:${identity.key}`;
-    const { count, resetInSeconds } = await this.redisService.incrementWithWindow(
-      key,
-      windowSeconds,
-    );
+    const { count, resetInSeconds } =
+      await this.redisService.incrementWithWindow(key, windowSeconds);
 
     response.setHeader('X-RateLimit-Limit', String(limit));
-    response.setHeader('X-RateLimit-Remaining', String(Math.max(limit - count, 0)));
+    response.setHeader(
+      'X-RateLimit-Remaining',
+      String(Math.max(limit - count, 0)),
+    );
     response.setHeader('X-RateLimit-Reset', String(resetInSeconds));
 
     if (count > limit) {

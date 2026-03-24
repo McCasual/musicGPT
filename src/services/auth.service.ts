@@ -171,10 +171,12 @@ export class AuthService {
   }
 
   private hashToken(token: string): string {
-    return createHash("sha256").update(token).digest("hex");
+    return createHash('sha256').update(token).digest('hex');
   }
 
-  private async verifyRefreshToken(token: string): Promise<RefreshTokenPayload> {
+  private async verifyRefreshToken(
+    token: string,
+  ): Promise<RefreshTokenPayload> {
     const refreshSecret = this.configService.get<string>('JWT_REFRESH_SECRET');
     let payload: RefreshTokenPayload;
     try {
@@ -185,12 +187,14 @@ export class AuthService {
       throw new UnauthorizedException('Invalid refresh token');
     }
     return payload;
-}
+  }
   async logout(refreshToken: string) {
     const payload = await this.verifyRefreshToken(refreshToken);
     const tokenHash = this.hashToken(refreshToken);
-    const tokenRow = await this.refreshTokenRepository.findById(payload.tokenId);
-    
+    const tokenRow = await this.refreshTokenRepository.findById(
+      payload.tokenId,
+    );
+
     if (!tokenRow || tokenRow.tokenHash !== tokenHash) {
       throw new UnauthorizedException('Invalid refresh token');
     }

@@ -17,10 +17,13 @@ import { UserController } from './controllers/user.controller';
 import { UserService } from './services/user.service';
 import { AudioController } from './controllers/audio.controller';
 import { PromptController } from './controllers/prompt.controller';
+import { SearchController } from './controllers/search.controller';
 import { AudioRepository } from './repositories/audio.repository';
 import { PromptRepository } from './repositories/prompt.repository';
+import { SearchRepository } from './repositories/search.repository';
 import { AudioService } from './services/audio.service';
 import { PromptService } from './services/prompt.service';
+import { SearchService } from './services/search.service';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -39,14 +42,17 @@ import { PromptService } from './services/prompt.service';
     SubscriptionController,
     PromptController,
     AudioController,
+    SearchController,
   ],
   providers: [
     AppService,
     AuthService,
     SubscriptionService,
     AudioService,
+    SearchService,
     UserService,
     AudioRepository,
+    SearchRepository,
     UsersRepository,
     PromptRepository,
     PromptService,

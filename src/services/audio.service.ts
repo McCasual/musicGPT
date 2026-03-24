@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { RedisService } from 'src/infrastructure/redis.service';
 import { AudioRepository } from 'src/repositories/audio.repository';
 
@@ -9,7 +13,11 @@ export class AudioService {
     private readonly redisService: RedisService,
   ) {}
 
-  async listUserAudios(params: { userId: string; cursor?: string; limit: number }) {
+  async listUserAudios(params: {
+    userId: string;
+    cursor?: string;
+    limit: number;
+  }) {
     const { userId, cursor, limit } = params;
     const cacheKey = this.getListCacheKey({ userId, cursor, limit });
     const cachedData = await this.redisService.get(cacheKey);

@@ -7,7 +7,7 @@ export type User = any;
 
 @Injectable()
 export class UsersRepository {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(private readonly prisma: PrismaService) {}
 
   async findByEmail(email: string) {
     const user = await this.prisma.user.findUnique({ where: { email } });
@@ -47,8 +47,10 @@ export class UsersRepository {
       nextCursor = users[limit].id;
       users.pop();
     }
-    return { users: { data: users.map(toUser), meta: { next_cursor: nextCursor } } }
-  };
+    return {
+      users: { data: users.map(toUser), meta: { next_cursor: nextCursor } },
+    };
+  }
 
   async updateById(
     id: string,

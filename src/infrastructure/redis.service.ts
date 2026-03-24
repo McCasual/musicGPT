@@ -1,4 +1,9 @@
-import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  OnModuleDestroy,
+  OnModuleInit,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { RedisClientType, createClient } from 'redis';
 
@@ -52,7 +57,11 @@ export class RedisService implements OnModuleInit, OnModuleDestroy {
     return value ? JSON.parse(value) : null;
   }
 
-  async set(key: string, value: object, ttlSeconds: number = 60): Promise<void> {
+  async set(
+    key: string,
+    value: object,
+    ttlSeconds: number = 60,
+  ): Promise<void> {
     await this.client.set(key, JSON.stringify(value), { EX: ttlSeconds });
   }
 
