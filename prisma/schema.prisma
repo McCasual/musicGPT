@@ -4,8 +4,8 @@
 // Get a free hosted Postgres database in seconds: `npx create-db`
 
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider     = "prisma-client"
+  output       = "../generated/prisma"
   moduleFormat = "cjs"
 }
 
@@ -27,22 +27,23 @@ model User {
   createdAt          DateTime           @default(now()) @map("created_at")
   updatedAt          DateTime           @updatedAt @map("updated_at")
 
-  refreshTokens  RefreshToken[]
+  refreshTokens RefreshToken[]
   subscriptions Subscription[]
-  prompts Prompt[]
+  prompts       Prompt[]
+  audios        Audio[]
 
   @@map("users")
 }
 
 model RefreshToken {
-  id                String        @id @default(uuid()) @db.Uuid
-  userId            String        @db.Uuid @map("user_id")
-  tokenHash         String        @unique @map("token_hash")
-  expiresAt         DateTime      @map("expires_at")
-  revokedAt         DateTime?     @map("revoked_at")
-  createdAt         DateTime      @default(now()) @map("created_at")
-  updatedAt         DateTime      @updatedAt @map("updated_at")
-  user              User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  tokenHash String    @unique @map("token_hash")
+  expiresAt DateTime  @map("expires_at")
+  revokedAt DateTime? @map("revoked_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, revokedAt])
   @@index([expiresAt])
@@ -51,7 +52,7 @@ model RefreshToken {
 
 model Subscription {
   id                String             @id @default(uuid()) @db.Uuid
-  userId            String             @db.Uuid @map("user_id")
+  userId            String             @map("user_id") @db.Uuid
   tier              SubscriptionStatus @default(FREE)
   gateway           String             @default("KHALTI")
   pidx              String?            @unique
@@ -81,14 +82,33 @@ enum PromptStatus {
 }
 
 model Prompt {
-  id String @id @default(uuid()) @db.Uuid
-  userId String @db.Uuid @map("user_id")
-  text String 
-  status PromptStatus @default(PENDING)
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+  id        String       @id @default(uuid()) @db.Uuid
+  userId    String       @map("user_id") @db.Uuid
+  text      String
+  status    PromptStatus @default(PENDING)
+  createdAt DateTime     @default(now()) @map("created_at")
+  updatedAt DateTime     @updatedAt @map("updated_at")
+
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  audios Audio[]
+
   @@index([userId, createdAt])
   @@map("prompts")
+}
+
+model Audio {
+  id        String   @id @default(uuid()) @db.Uuid
+  promptId  String   @map("prompt_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  title     String
+  url       String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  prompt Prompt @relation(fields: [promptId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([promptId, createdAt])
+  @@index([userId, createdAt])
+  @@map("audios")
 }

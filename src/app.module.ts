@@ -15,6 +15,9 @@ import { RefreshTokenRepository } from './repositories/refresh-token.repository'
 import { SubscriptionService } from './services/subscribe.service';
 import { UserController } from './controllers/user.controller';
 import { UserService } from './services/user.service';
+import { PromptController } from './controllers/prompt.controller';
+import { PromptRepository } from './repositories/prompt.repository';
+import { PromptService } from './services/prompt.service';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -26,13 +29,15 @@ import { UserService } from './services/user.service';
       signOptions: { expiresIn: '60s' },
     }),
   ],
-  controllers: [AppController, UserController, AuthController, SubscriptionController],
+  controllers: [AppController, UserController, AuthController, SubscriptionController, PromptController],
   providers: [
     AppService,
     AuthService,
     SubscriptionService,
     UserService,
     UsersRepository,
+    PromptRepository,
+    PromptService,
     SubscriptionRepository,
     RefreshTokenRepository,
     PrismaService,
