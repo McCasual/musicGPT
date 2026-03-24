@@ -200,6 +200,7 @@ These are used by compose files for infra defaults:
 - `POST /auth/refresh`: verifies and rotates refresh token, returns new access + refresh pair.
 - `POST /auth/logout`: verifies refresh token and revokes it.
 - Protected REST routes use bearer access token via `AuthGuard`.
+- Exception: `GET /subscription/status` is intentionally open (no auth guard) and syncs payment status using `pidx`.
 - Socket.IO `/notifications` accepts access token in `handshake.auth.token` or `Authorization: Bearer <token>` header.
 
 ```mermaid
@@ -432,8 +433,8 @@ Perks tied to plan:
 
 Lifecycle summary:
 
-- `POST /subscription/subscribe` (type must be `PAID`): creates Khalti payment session and stores initiated subscription.
-- `GET /subscription/status?pidx=...`: syncs payment gateway status and updates DB + effective user tier.
+- `POST /subscription/subscribe` (authenticated endpoint; `type` must be `PAID`): creates Khalti payment session and stores initiated subscription.
+- `GET /subscription/status?pidx=...` (open endpoint): syncs payment gateway status and updates DB + effective user tier.
 - `POST /subscription/cancel`: marks active subscription inactive and sets user tier back to `FREE`.
 
 Status sync rules:
@@ -456,3 +457,10 @@ stateDiagram-v2
 - Swagger/OpenAPI docs are served at `/docs`.
 - Prompt completion realtime event is emitted as `prompt.completed` in namespace `/notifications` and scoped to user-specific rooms.
 - Static files under `public/` are served by the API process.
+
+## Postman Links
+
+Socket.IO requests in Postman are not included when exporting a collection as JSON, so they are shared via Postman workspace links instead.
+
+- REST collection: https://restless-satellite-886057.postman.co/workspace/Random~00ba3cbb-4740-4176-8868-4c7e8b40b16e/collection/69c27eb041935ebe6166d776?action=share&creator=30139296&active-environment=30139296-2ad2c983-4a5c-4302-82ae-06c99d443fa4
+- Socket.IO-enabled collection/workspace share: https://restless-satellite-886057.postman.co/workspace/Random~00ba3cbb-4740-4176-8868-4c7e8b40b16e/collection/30139296-b597462f-02bb-45f7-9b3a-b82369a6d70d?action=share&creator=30139296&active-environment=30139296-2ad2c983-4a5c-4302-82ae-06c99d443fa4

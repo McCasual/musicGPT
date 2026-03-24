@@ -45,13 +45,8 @@ interface AuthenticatedRequest extends Request {
 }
 
 @Controller('subscription')
-@UseGuards(SubscriptionRateLimitGuard, AuthGuard)
+@UseGuards(SubscriptionRateLimitGuard)
 @ApiTags('subscription')
-@ApiBearerAuth()
-@ApiUnauthorizedResponse({
-  description: 'Missing or invalid bearer token.',
-  type: ApiErrorResponseDto,
-})
 @ApiTooManyRequestsResponse({
   description: 'Rate limit exceeded for current subscription tier.',
   type: ApiErrorResponseDto,
@@ -60,6 +55,12 @@ export class SubscriptionController {
   constructor(private readonly subscriptionService: SubscriptionService) {}
 
   @Post('subscribe')
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
+  @ApiUnauthorizedResponse({
+    description: 'Missing or invalid bearer token.',
+    type: ApiErrorResponseDto,
+  })
   @ApiOperation({
     summary: 'Initiate paid subscription',
     description:
@@ -94,6 +95,12 @@ export class SubscriptionController {
   }
 
   @Post('cancel')
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
+  @ApiUnauthorizedResponse({
+    description: 'Missing or invalid bearer token.',
+    type: ApiErrorResponseDto,
+  })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Cancel subscription',
