@@ -13,12 +13,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Create .env file
-        env:
-          PRODUCTION_ENV_FILE: ${{ secrets.PRODUCTION_ENV_FILE }}
-        run: |
-          printf '%s' "$PRODUCTION_ENV_FILE" > .env
-
       - name: Create tarball
         run: |
           TAR_PATH="$RUNNER_TEMP/backend.tar.gz"
@@ -37,6 +31,8 @@ jobs:
           cp "$RUNNER_TEMP/backend.tar.gz" ~/backend.tar.gz
 
       - name: Execute docker commands
+        env:
+          PRODUCTION_ENV_FILE: ${{ secrets.PRODUCTION_ENV_FILE }}
         run: |
           set -euo pipefail
 
@@ -61,6 +57,8 @@ jobs:
 
           ln -sfnT "$RELEASE_PATH" "$LATEST_PATH"
           cd "$LATEST_PATH"
+          printf '%s' "$PRODUCTION_ENV_FILE" > .env
+          chmod 600 .env
 
           docker compose -f docker-compose.prod.yml build
           docker compose -f docker-compose.prod.yml up -d
