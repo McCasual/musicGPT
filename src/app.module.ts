@@ -24,6 +24,8 @@ import { SearchRepository } from './repositories/search.repository';
 import { AudioService } from './services/audio.service';
 import { PromptService } from './services/prompt.service';
 import { SearchService } from './services/search.service';
+import { ServeStaticModule } from '@nestjs/serve-static';
+import { join } from 'path';
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -33,6 +35,9 @@ import { SearchService } from './services/search.service';
       global: true,
       secret: 'supersecret-changelater',
       signOptions: { expiresIn: '60s' },
+    }),
+    ServeStaticModule.forRoot({
+      rootPath: join(process.cwd(), 'public'),
     }),
   ],
   controllers: [
