@@ -27,10 +27,18 @@ export class AudioService {
   }
 
   async getUserAudioById(userId: string, audioId: string) {
+    const cacheKey = this.getDetailCacheKey(userId, audioId);
+    const cachedData = await this.redisService.get(cacheKey);
+    if (cachedData) {
+      return cachedData;
+    }
+
     const audio = await this.audioRepository.findByIdForUser(audioId, userId);
     if (!audio) {
       throw new NotFoundException('Audio not found.');
     }
+
+    void this.redisService.set(cacheKey, audio, 60);
     return audio;
   }
 
@@ -50,6 +58,7 @@ export class AudioService {
       throw new NotFoundException('Audio not found.');
     }
 
+    void this.redisService.del(this.getDetailCacheKey(userId, audioId));
     return updated;
   }
 
@@ -64,5 +73,9 @@ export class AudioService {
 
   private getListCachePrefix(userId: string): string {
     return `audio:user=${userId}:`;
+  }
+
+  private getDetailCacheKey(userId: string, audioId: string): string {
+    return `audio:user=${userId}:id=${audioId}`;
   }
 }

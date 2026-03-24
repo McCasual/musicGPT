@@ -30,12 +30,20 @@ export class UserService {
   }
 
   async getUserById(id: string) {
+    const cacheKey = this.getUserByIdCacheKey(id);
+    const cachedData = await this.redisService.get(cacheKey);
+    if (cachedData) {
+      return cachedData;
+    }
+
     const user = await this.usersRepository.findById(id);
     if (!user) {
       throw new NotFoundException('User not found.');
     }
 
-    return this.toPublicUser(user);
+    const publicUser = this.toPublicUser(user);
+    void this.redisService.set(cacheKey, publicUser, 60);
+    return publicUser;
   }
 
   async updateUser(id: string, input: UpdateUserDto) {
@@ -67,7 +75,12 @@ export class UserService {
       throw new NotFoundException('User not found.');
     }
 
+    void this.redisService.del(this.getUserByIdCacheKey(id));
     return this.toPublicUser(updated);
+  }
+
+  private getUserByIdCacheKey(id: string): string {
+    return `users:id=${id}`;
   }
 
   private toPublicUser(user: UserEntity) {
