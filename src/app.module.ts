@@ -15,8 +15,11 @@ import { RefreshTokenRepository } from './repositories/refresh-token.repository'
 import { SubscriptionService } from './services/subscribe.service';
 import { UserController } from './controllers/user.controller';
 import { UserService } from './services/user.service';
+import { AudioController } from './controllers/audio.controller';
 import { PromptController } from './controllers/prompt.controller';
+import { AudioRepository } from './repositories/audio.repository';
 import { PromptRepository } from './repositories/prompt.repository';
+import { AudioService } from './services/audio.service';
 import { PromptService } from './services/prompt.service';
 @Module({
   imports: [
@@ -29,12 +32,21 @@ import { PromptService } from './services/prompt.service';
       signOptions: { expiresIn: '60s' },
     }),
   ],
-  controllers: [AppController, UserController, AuthController, SubscriptionController, PromptController],
+  controllers: [
+    AppController,
+    UserController,
+    AuthController,
+    SubscriptionController,
+    PromptController,
+    AudioController,
+  ],
   providers: [
     AppService,
     AuthService,
     SubscriptionService,
+    AudioService,
     UserService,
+    AudioRepository,
     UsersRepository,
     PromptRepository,
     PromptService,
