@@ -21,18 +21,20 @@ jobs:
 
       - name: Create tarball
         run: |
+          TAR_PATH="$RUNNER_TEMP/backend.tar.gz"
           tar \
             --exclude=.git \
             --exclude=node_modules \
             --exclude=dist \
             --exclude=coverage \
+            --exclude=.env \
             --exclude=.env.* \
             --exclude=backend.tar.gz \
-            -czf backend.tar.gz .
+            -czf "$TAR_PATH" .
 
       - name: Copy files to home
         run: |
-          cp ./backend.tar.gz ~/
+          cp "$RUNNER_TEMP/backend.tar.gz" ~/backend.tar.gz
 
       - name: Execute docker commands
         run: |
