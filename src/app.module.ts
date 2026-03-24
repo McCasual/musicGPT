@@ -7,6 +7,7 @@ import { SubscriptionController } from './controllers/subscription.controller';
 import { AuthGuard } from './infrastructure/auth.guard';
 import { PrismaService } from './infrastructure/prisma.service';
 import { RedisService } from './infrastructure/redis.service';
+import { SubscriptionRateLimitGuard } from './infrastructure/subscription-rate-limit.guard';
 import { UsersRepository } from './repositories/users.repository';
 import { SubscriptionRepository } from './repositories/subscription.repository';
 import { AppService } from './services/app.service';
@@ -66,6 +67,7 @@ import { join } from 'path';
     PrismaService,
     RedisService,
     AuthGuard,
+    SubscriptionRateLimitGuard,
   ],
 })
 export class AppModule {}

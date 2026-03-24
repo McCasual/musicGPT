@@ -1,8 +1,13 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth } from '@nestjs/swagger';
 import { SearchQueryDto } from 'src/dtos/search.dto';
+import { AuthGuard } from 'src/infrastructure/auth.guard';
+import { SubscriptionRateLimitGuard } from 'src/infrastructure/subscription-rate-limit.guard';
 import { SearchService } from 'src/services/search.service';
 
 @Controller('search')
+@UseGuards(SubscriptionRateLimitGuard, AuthGuard)
+@ApiBearerAuth()
 export class SearchController {
   constructor(private readonly searchService: SearchService) {}
 

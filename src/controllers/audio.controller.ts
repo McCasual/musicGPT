@@ -16,6 +16,7 @@ import { ApiBearerAuth } from '@nestjs/swagger';
 import { Request } from 'express';
 import { GetAudiosQueryDto, UpdateAudioTitleDto } from 'src/dtos/audio.dto';
 import { AuthGuard } from 'src/infrastructure/auth.guard';
+import { SubscriptionRateLimitGuard } from 'src/infrastructure/subscription-rate-limit.guard';
 import { AudioService } from 'src/services/audio.service';
 
 interface AuthenticatedRequest extends Request {
@@ -25,7 +26,7 @@ interface AuthenticatedRequest extends Request {
 }
 
 @Controller('audio')
-@UseGuards(AuthGuard)
+@UseGuards(SubscriptionRateLimitGuard, AuthGuard)
 @ApiBearerAuth()
 export class AudioController {
   constructor(private readonly audioService: AudioService) {}

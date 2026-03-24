@@ -3,6 +3,8 @@ import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { AuthController } from './auth.controller';
 import { AuthGuard } from '../infrastructure/auth.guard';
+import { RedisService } from '../infrastructure/redis.service';
+import { SubscriptionRateLimitGuard } from '../infrastructure/subscription-rate-limit.guard';
 import { AuthService } from '../services/auth.service';
 
 describe('AuthController', () => {
@@ -16,7 +18,20 @@ describe('AuthController', () => {
           provide: AuthService,
           useValue: { signIn: jest.fn() },
         },
-        AuthGuard,
+        {
+          provide: AuthGuard,
+          useValue: { canActivate: jest.fn().mockResolvedValue(true) },
+        },
+        {
+          provide: SubscriptionRateLimitGuard,
+          useValue: { canActivate: jest.fn().mockResolvedValue(true) },
+        },
+        {
+          provide: RedisService,
+          useValue: {
+            incrementWithWindow: jest.fn(),
+          },
+        },
         {
           provide: JwtService,
           useValue: { verifyAsync: jest.fn() },

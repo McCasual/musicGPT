@@ -6,13 +6,19 @@ import {
   ParseUUIDPipe,
   Put,
   Query,
+  UseGuards,
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
+import { ApiBearerAuth } from '@nestjs/swagger';
 import { GetUsersQueryDto, UpdateUserDto } from 'src/dtos/user.dto';
+import { AuthGuard } from 'src/infrastructure/auth.guard';
+import { SubscriptionRateLimitGuard } from 'src/infrastructure/subscription-rate-limit.guard';
 import { UserService } from 'src/services/user.service';
 
 @Controller('users')
+@UseGuards(SubscriptionRateLimitGuard, AuthGuard)
+@ApiBearerAuth()
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
