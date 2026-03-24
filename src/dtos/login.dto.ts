@@ -2,11 +2,18 @@ import { ApiProperty } from '@nestjs/swagger';
 import { IsEmail, MinLength } from 'class-validator';
 
 export class LoginDto {
-  @ApiProperty({ example: 'hi@anukuladhikari.com' })
+  @ApiProperty({
+    description: 'Email used for account login.',
+    example: 'hi@anukuladhikari.com',
+  })
   @IsEmail()
-  email: string;
+  email!: string;
 
-  @ApiProperty({ example: 'changeme' })
+  @ApiProperty({
+    description: 'Account password (minimum 8 characters).',
+    example: 'changeme123',
+    minLength: 8,
+  })
   @MinLength(8)
-  password: string;
+  password!: string;
 }

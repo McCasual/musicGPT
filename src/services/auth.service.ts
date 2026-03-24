@@ -199,5 +199,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid refresh token');
     }
     await this.refreshTokenRepository.revokeById(tokenRow.id);
+
+    return { message: 'Logged out.' };
   }
 }

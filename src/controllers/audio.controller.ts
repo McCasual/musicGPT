@@ -12,8 +12,23 @@ import {
   UsePipes,
   ValidationPipe,
 } from '@nestjs/common';
-import { ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiBadRequestResponse,
+  ApiBearerAuth,
+  ApiNotFoundResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiParam,
+  ApiTags,
+  ApiTooManyRequestsResponse,
+  ApiUnauthorizedResponse,
+} from '@nestjs/swagger';
 import { Request } from 'express';
+import {
+  ApiErrorResponseDto,
+  AudioDto,
+  AudioListResponseDto,
+} from 'src/docs/swagger.schemas';
 import { GetAudiosQueryDto, UpdateAudioTitleDto } from 'src/dtos/audio.dto';
 import { AuthGuard } from 'src/infrastructure/auth.guard';
 import { SubscriptionRateLimitGuard } from 'src/infrastructure/subscription-rate-limit.guard';
@@ -27,11 +42,32 @@ interface AuthenticatedRequest extends Request {
 
 @Controller('audio')
 @UseGuards(SubscriptionRateLimitGuard, AuthGuard)
+@ApiTags('audio')
 @ApiBearerAuth()
+@ApiUnauthorizedResponse({
+  description: 'Missing or invalid bearer token.',
+  type: ApiErrorResponseDto,
+})
+@ApiTooManyRequestsResponse({
+  description: 'Rate limit exceeded for current subscription tier.',
+  type: ApiErrorResponseDto,
+})
 export class AudioController {
   constructor(private readonly audioService: AudioService) {}
 
   @Get('')
+  @ApiOperation({
+    summary: 'List my audio',
+    description: 'Returns current user audio records using cursor pagination.',
+  })
+  @ApiOkResponse({
+    description: 'Paginated audio response.',
+    type: AudioListResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: 'Invalid pagination inputs.',
+    type: ApiErrorResponseDto,
+  })
   listMyAudios(
     @Req() req: AuthenticatedRequest,
     @Query() query: GetAudiosQueryDto,
@@ -51,6 +87,23 @@ export class AudioController {
   }
 
   @Get(':id')
+  @ApiOperation({
+    summary: 'Get my audio by id',
+    description: 'Returns one audio record owned by the authenticated user.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Audio UUID.',
+    format: 'uuid',
+  })
+  @ApiOkResponse({
+    description: 'Audio found.',
+    type: AudioDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'Audio not found for user.',
+    type: ApiErrorResponseDto,
+  })
   getMyAudioById(
     @Req() req: AuthenticatedRequest,
     @Param('id', ParseUUIDPipe) id: string,
@@ -65,6 +118,27 @@ export class AudioController {
       forbidNonWhitelisted: true,
     }),
   )
+  @ApiOperation({
+    summary: 'Update my audio title',
+    description: 'Updates the title of one audio record owned by the user.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Audio UUID.',
+    format: 'uuid',
+  })
+  @ApiOkResponse({
+    description: 'Updated audio.',
+    type: AudioDto,
+  })
+  @ApiBadRequestResponse({
+    description: 'Invalid payload or empty title.',
+    type: ApiErrorResponseDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'Audio not found for user.',
+    type: ApiErrorResponseDto,
+  })
   updateMyAudioTitle(
     @Req() req: AuthenticatedRequest,
     @Param('id', ParseUUIDPipe) id: string,
