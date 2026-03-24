@@ -102,6 +102,18 @@ export class PromptRepository {
     });
   }
 
+  async findByIdWithLatestAudio(id: string) {
+    return this.prisma.prompt.findUnique({
+      where: { id },
+      include: {
+        audios: {
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+        },
+      },
+    });
+  }
+
   async markPending(id: string): Promise<boolean> {
     const updated = await this.prisma.prompt.updateMany({
       where: { id },

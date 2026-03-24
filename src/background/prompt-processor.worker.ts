@@ -9,6 +9,7 @@ import {
   ProcessPromptJobData,
   PROMPT_PROCESSING_QUEUE,
 } from 'src/background/prompt-jobs';
+import { PromptNotificationPublisherService } from 'src/background/prompt-notification-publisher.service';
 import { PromptRepository } from 'src/repositories/prompt.repository';
 
 @Injectable()
@@ -19,6 +20,7 @@ export class PromptProcessorWorker extends WorkerHost {
   constructor(
     private readonly promptRepository: PromptRepository,
     private readonly configService: ConfigService,
+    private readonly promptNotificationPublisher: PromptNotificationPublisherService,
   ) {
     super();
   }
@@ -57,17 +59,54 @@ export class PromptProcessorWorker extends WorkerHost {
     try {
       await sleep(this.getPositiveInt('PROMPT_PROCESSING_DELAY_MS', 5000));
 
-      return await this.promptRepository.completeWithAudio({
+      const completedPrompt = await this.promptRepository.completeWithAudio({
         promptId,
         title: this.buildAudioTitle(prompt.text),
         url:
           this.configService.get<string>('PROMPT_AUDIO_URL')?.trim() ||
           '/audios/processed-prompt.mp3',
       });
+
+      if (completedPrompt && completedPrompt.status === PromptStatus.COMPLETED) {
+        await this.publishPromptCompletedEvent(promptId);
+      }
+
+      return completedPrompt;
     } catch (error) {
       await this.promptRepository.markPending(promptId);
       throw error;
     }
+  }
+
+  private async publishPromptCompletedEvent(promptId: string): Promise<void> {
+    const completedPrompt =
+      await this.promptRepository.findByIdWithLatestAudio(promptId);
+
+    if (!completedPrompt || completedPrompt.status !== PromptStatus.COMPLETED) {
+      return;
+    }
+
+    const latestAudio = completedPrompt.audios[0] ?? null;
+
+    await this.promptNotificationPublisher.publishPromptCompleted({
+      userId: completedPrompt.userId,
+      prompt: {
+        id: completedPrompt.id,
+        text: completedPrompt.text,
+        status: 'COMPLETED',
+        createdAt: completedPrompt.createdAt.toISOString(),
+        updatedAt: completedPrompt.updatedAt.toISOString(),
+      },
+      audio: latestAudio
+        ? {
+            id: latestAudio.id,
+            title: latestAudio.title,
+            url: latestAudio.url,
+            createdAt: latestAudio.createdAt.toISOString(),
+            updatedAt: latestAudio.updatedAt.toISOString(),
+          }
+        : null,
+    });
   }
 
   private buildAudioTitle(text: string): string {
