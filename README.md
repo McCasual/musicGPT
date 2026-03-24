@@ -40,9 +40,37 @@ $ npm run start
 # watch mode
 $ npm run start:dev
 
+# prompt scheduler
+$ npm run start:scheduler
+
+# prompt worker
+$ npm run start:worker
+
 # production mode
 $ npm run start:prod
+
+# production prompt scheduler
+$ npm run start:scheduler:prod
+
+# production prompt worker
+$ npm run start:worker:prod
 ```
+
+## Background prompt processing
+
+Prompt submission is now split across three independent processes:
+
+- `POST /prompts` only creates a prompt with status `PENDING`.
+- `npm run start:scheduler` runs a separate BullMQ scheduler process that periodically scans for `PENDING` prompts and enqueues them into Redis.
+- `npm run start:worker` runs a separate BullMQ worker process that marks prompts as `PROCESSING`, waits for a simulated generation delay, creates an `Audio` record, and then marks prompts as `COMPLETED`.
+
+Environment variables:
+
+- `REDIS_URL`: Redis connection string used by BullMQ and caching. Defaults to `redis://localhost:6379`.
+- `PROMPT_SCHEDULER_CRON`: Cron pattern used by the scheduler queue. Defaults to `*/15 * * * * *`.
+- `PROMPT_SCHEDULER_BATCH_SIZE`: Number of pending prompts scanned per scheduler tick. Defaults to `25`.
+- `PROMPT_PROCESSING_DELAY_MS`: Simulated prompt-generation delay in milliseconds. Defaults to `5000`.
+- `PROMPT_AUDIO_URL`: Audio URL written to the generated `Audio` record. Defaults to `/audios/processed-prompt.mp3`.
 
 ## Run tests
 
